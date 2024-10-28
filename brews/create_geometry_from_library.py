@@ -1,4 +1,4 @@
-"""Sample file showing how to load a geometry asset from a DSON file."""
+"""Sample file showing how to load a geometry asset from a DSF file."""
 
 # Import packages
 import bpy
@@ -12,7 +12,7 @@ from bmesh.types import BMesh, BMVert
 from mathutils import Vector
 from dufman.structs.geometry import DsonGeometry
 
-# Replace these 
+# Replace these. FILEPATH should be a DSF (not a DUF) file.
 DIRECTORY:str = "C:/Users/Public/Documents/Daz3D"
 FILEPATH:str = "/data/DAZ 3D/Genesis 8/Female/Genesis8Female.dsf#geometry"
 
