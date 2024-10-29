@@ -34,8 +34,8 @@ bm.from_mesh(mesh)
 #    which means some faces will need to be skipped. Other DSON assets (i.e.
 #    morphs) may rely on the original indices, so cache them for future use 
 #    during the creation process.
-dson_vert:BMLayerItem = bm.verts.layers.int.new("dson_original_vertex_indices")
-dson_face:BMLayerItem = bm.faces.layers.int.new("dson_original_face_indices")
+dson_vert:BMLayerItem = bm.verts.layers.int.new("dson_vertex_indices")
+dson_face:BMLayerItem = bm.faces.layers.int.new("dson_face_indices")
 
 # Cache the material indices from the DSF file. This is technically
 #    redundant, since material indices are stored as attributes already.
