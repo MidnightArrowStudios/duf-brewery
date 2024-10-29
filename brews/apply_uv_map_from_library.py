@@ -1,4 +1,8 @@
-"""Sample file showing how to apply a UV map from a DSF file to a geometry asset."""
+"""Sample file showing how to apply a UV map from a DSF file to a geometry asset.
+
+This code assumes we have already loaded a mesh from a DSF file using the
+"create_geometry_from_library.py" sample file.
+"""
 
 # Import packages
 import bpy
