@@ -3,10 +3,10 @@ DUF Brewery is a collection of short test scripts (elsewhere called a "cookbook"
 
 You can find them in the `/brews` folder.
 
-Right now, DUFMan is under active development, so make sure you download the latest version from the repository when trying the scripts.
+Right now, DUFMan is under active development, so make sure you download the latest version from the repository when trying the scripts since they may rely on bugfixes or features that don't exist in older builds.
 
 # How do I install DUFMan in Blender?
-DUFMan is licensed under MIT, but any code that uses Blender's Python API must be licensed under GPL. To avoid the GPL license spreading to DUFMan's codebase, DUFMan must be installed separately from these test scripts. However, this process is fairly painless.
+DUFMan is licensed under the MIT license, but any code that uses Blender's Python API must be licensed under the GPL. To avoid the GPL spreading to DUFMan's codebase, DUFMan must be installed separately from these test scripts. However, this process is fairly painless.
 
 The recommended approach is to install the DUFMan package into an external script directory. The process to do that [is detailed in the Blender documentation](https://docs.blender.org/manual/en/latest/editors/preferences/file_paths.html#script-directories). To summarize:
 1. Create a new folder on your file system (`/MyBlenderScripts`, for instance), and then create a `/modules` folder inside that.
