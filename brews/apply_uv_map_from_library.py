@@ -27,8 +27,7 @@ MESH_NAME:str = "geometry"
 # Add user's content directory.
 dufman.file.add_content_directory(DIRECTORY)
 
-# This should be a previously-loaded Daz Studio geometry asset.
-# For this example, we will use the Genesis 8 Female mesh.
+# Get the mesh from the Daz Studio asset we already loaded.
 mesh:Mesh = bpy.data.meshes[MESH_NAME]
 
 # Extract UV map data from DSF file.
