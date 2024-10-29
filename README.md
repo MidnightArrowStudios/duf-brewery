@@ -7,11 +7,11 @@ You can find them in the `/brews` folder.
 DUFMan is licensed under MIT, but any code that uses Blender's Python API must be licensed under GPL. To avoid the GPL license spreading to DUFMan's codebase, DUFMan must be installed separately from these test scripts. However, this process is fairly painless.
 
 The recommended approach is to install the DUFMan package into an external script directory. The process to do that [is detailed in the Blender documentation](https://docs.blender.org/manual/en/latest/editors/preferences/file_paths.html#script-directories). To summarize:
-1. Create a folder on your file system with a `/modules` folder inside it.
-2. Copy the DUFMan package (https://github.com/MidnightArrowStudios/dufman) into a folder named `dufman`.
+1. Create a new folder on your file system (`/MyBlenderScripts`, for instance), and then create a `/modules` folder inside that.
+2. Copy the DUFMan package (https://github.com/MidnightArrowStudios/dufman) into a new folder inside `/modules` named `dufman`.
 3. Open Blender's preferences menu.
 4. Go to the `File Paths` tab.
-5. Add the directory you created (not the `/modules` folder, the folder containing it) to the `Script Directories` section.
+5. Add the directory you created (not the `/modules` folder, the folder that contains it) to the `Script Directories` section.
 
 Now, you should be able to import DUFMan in either the Python console or the text editor.
 
