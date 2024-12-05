@@ -1,73 +1,97 @@
-"""Sample script demonstrating how to apply a skin binding from a DSF file.
+"""Sample file showing how to apply a SkinBinding asset from a DSF file.
 
-This script only handles the "node_weights" type used by Genesis 3 and
-onward. TriAx, etc. won't work.
+This only handles "node_weights" skin binding used by Genesis 3 and above.
 
-It also assumes a Genesis 8 Female mesh and armature have been loaded into
-the scene, in the same manner as the "create_geometry_from_library.py" and
-"create_armature_from_library.py" sample scripts.
+Prerequisites:
+    -run "create_geometry_from_library.py"
+    -run "create_armature_from_library.py"
 """
 
-# Import packages
+
+# ============================================================================ #
+# IMPORT                                                                       #
+# ============================================================================ #
+
+# bpy
 import bpy
-import dufman
-
-# Import datatypes
 from bpy.types import ArmatureModifier, Object, VertexGroup
-from dufman.datatypes import DsonWeightedJoint
-from dufman.structs.modifier import DsonModifier
-from dufman.url import AssetURL
 
-# Replace these.
-#   - DIRECTORY should match the user's Daz Studio content directory.
-#   - FILEPATH should be a DSF (not DUF) file containing a SkinBinding.
-#   - RIG_NAME is the name of a DSON figure node, previously imported.
-#   - GEO_NAME is the name of the DSON geometry associated with the
-#       RIG_NAME node.
-DIRECTORY:str = "C:/Users/Public/Documents/Daz3D"
-FILEPATH:str = "/data/DAZ 3D/Genesis 8/Female/Genesis8Female.dsf#SkinBinding"
-RIG_NAME:str = "Genesis8Female"
-GEO_NAME:str = "geometry"
+# dufman
+from dufman.file import add_content_directory, remove_content_directory
+from dufman.structs import DsonModifier, DsonSkinBinding, DsonWeightedJoint
+from dufman.url import parse_url_string
 
-# Get pointers to previously-created assets.
-rig_obj:Object = bpy.data.objects[RIG_NAME]
-geo_obj:Object = bpy.data.objects[GEO_NAME]
 
-# Add user content directory.
-dufman.file.add_content_directory(DIRECTORY)
+# ============================================================================ #
+# FUNCTION                                                                     #
+# ============================================================================ #
 
-# Extract modifier asset from file.
-struct:DsonModifier = dufman.create.modifier.create_modifier_struct(FILEPATH)
+def apply_skin_binding(geometry:Object, armature:Object, struct:DsonModifier) -> ArmatureModifier:
+    """Rig a mesh to an armature using the data inside a DsonModifier struct."""
 
-# Ensure data is valid
-if not struct.skin_binding:
-    raise Exception("DSF file does not contain a skin binding modifier.")
-
-if not struct.skin_binding.expected_vertices == len(geo_obj.data.vertices):
-    raise Exception("Could not load skin binding modifier. Vertex count mismatch.")
-
-# Dictionary holding DsonWeightedJoint objects representing bone weights.
-weighted_joints:dict = struct.skin_binding.weighted_joints
-
-# Loop through all bone weight groups and create vertex groups for them.
-for joint_id in weighted_joints:
+    # Modifiers is either a control property or a morph, not a skin binding.
+    if not struct.skin_binding:
+        raise Exception("Modifier does not contain skin binding.")
     
-    joint:DsonWeightedJoint = weighted_joints[joint_id]
-
-    # Node/bone name is stored as a URL, with a pound sign. This strips it off.
-    bone_name:str = dufman.url.parse_url_string(joint.node_target).asset_id
-
-    # Add bone weight to mesh as vertex group.
-    vertex_group:VertexGroup = geo_obj.vertex_groups.new(name=bone_name)
+    # Get sub-object
+    binding:DsonSkinBinding = struct.skin_binding
     
-    # Assign weights from DSON file.
-    for vertex_index in joint.node_weights:
-        value:float = joint.node_weights[vertex_index]
-        vertex_group.add( [vertex_index], value, 'REPLACE')
+    # Mesh does not have the right number of vertices.
+    if binding.expected_vertices != len(geometry.data.vertices):
+        raise Exception("Could not apply skin binding. Vertex count mismatch.")
+    
+    # Create a vertex group for each bone weight.
+    for weighted_joint in binding.weighted_joints:
 
-# Parent mesh to armature.
-geo_obj.parent = rig_obj
+        # Names are stored as URLs, with pound signs. This strips them off.
+        bone_name:str = parse_url_string(weighted_joint.node).asset_id
+        
+        # Add vertex group to object.
+        vertex_group:VertexGroup = geometry.vertex_groups.new(name=bone_name)
+    
+        # Assign the weights based on their index.
+        for vertex_index in weighted_joint.node_weights:
+            
+            # Weights are stored in a dictionary, with the vertex index as
+            #   the key.
+            value:float = weighted_joint.node_weights[vertex_index]
+            vertex_group.add([vertex_index], value, 'REPLACE')
+    
+    # Parent objects
+    geometry.parent = armature
+    
+    # Create modifier
+    arm_mod:ArmatureModifier = geometry.modifiers.new(name=struct.library_id, type='ARMATURE')
+    arm_mod.use_deform_preserve_volume = True
+    arm_mod.object = armature
+    
+    return arm_mod
 
-arm_mod:ArmatureModifier = geo_obj.modifiers.new(name="DsonSkinBinding", type='ARMATURE')
-arm_mod.use_deform_preserve_volume = True
-arm_mod.object = rig_obj
+
+# ============================================================================ #
+# FUNCTION                                                                     #
+# ============================================================================ #
+
+# Change this to match Daz Studio install directory
+CONTENT_DIRECTORY:str = "C:/Users/Public/Documents/Daz3D"
+SKIN_BINDING_URL:str = "/data/DAZ 3D/Genesis 8/Female/Genesis8Female.dsf#SkinBinding"
+
+# ============================================================================ #
+
+# Setup
+add_content_directory(CONTENT_DIRECTORY)
+
+# Retrieve objects to apply skin binding to. These should have been already
+#   created by running "create_armature_from_library.py" and 
+#   "create_geometry_from_library.py".
+armature_object:Object = bpy.data.objects["Genesis8Female"]
+geometry_object:Object = bpy.data.objects["geometry"]
+
+# Construct intermediate representation using DUFMan.
+struct:DsonModifier = DsonModifier.load(SKIN_BINDING_URL)
+
+# Apply skin binding to mesh and armature.
+apply_skin_binding(geometry_object, armature_object, struct)
+
+# Cleanup
+remove_content_directory(CONTENT_DIRECTORY)
