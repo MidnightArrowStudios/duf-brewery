@@ -86,7 +86,7 @@ def create_geometry(context:Context, struct:DsonGeometry) -> Mesh:
 # ============================================================================ #
 
 # Change this to match Daz Studio install directory
-CONTENT_DIRECTORY:str = "F:/Daz3D"
+CONTENT_DIRECTORY:str = "C:/Users/Public/Documents/Daz3D"
 GEOMETRY_URL:str = "/data/DAZ 3D/Genesis 8/Female/Genesis8Female.dsf#geometry"
 
 # ============================================================================ #
