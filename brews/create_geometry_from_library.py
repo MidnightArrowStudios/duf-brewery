@@ -1,76 +1,108 @@
-"""Sample file showing how to load a geometry asset from a DSF file."""
+"""Sample file showing how to load a geometry asset from a DSF file.
 
-# Import packages
+Prerequisites:
+    -None
+"""
+
+# ============================================================================ #
+# IMPORT                                                                       #
+# ============================================================================ #
+
+# bpy
 import bpy
+from bpy.types import Context, Mesh, Object
+
+# bmesh
 import bmesh
-import mathutils
-import dufman
+from bmesh.types import BMesh, BMFace, BMVert
 
-# Import datatypes
-from bpy.types import Mesh, Object
-from bmesh.types import BMFace, BMLayerItem, BMesh, BMVert
+# mathutils
 from mathutils import Vector
-from dufman.structs.geometry import DsonGeometry
 
-# Replace these. FILEPATH should be a DSF (not a DUF) file. For this
-#    example, we will use the Genesis8Female mesh.
-DIRECTORY:str = "C:/Users/Public/Documents/Daz3D"
-FILEPATH:str = "/data/DAZ 3D/Genesis 8/Female/Genesis8Female.dsf#geometry"
+# dufman
+from dufman import file
+from dufman.structs import DsonGeometry
 
-# Register user's content directory
-dufman.file.add_content_directory(DIRECTORY)
 
-# Create a wrapper object for DSON asset
-struct:DsonGeometry = dufman.create.geometry.create_geometry_struct(FILEPATH)
+# ============================================================================ #
+# FUNCTION                                                                     #
+# ============================================================================ #
 
-# Create an empty mesh object
-mesh:Mesh = bpy.data.meshes.new(struct.library_id)
-
-# Fill the mesh object with data from DSON file
-bm:BMesh = bmesh.new()
-bm.from_mesh(mesh)
-
-# Daz Studio is more lax when it comes to invalid faces than Blender,
-#    which means some faces will need to be skipped. Other DSON assets (i.e.
-#    morphs) may rely on the original indices, so cache them for future use 
-#    during the creation process.
-dson_vert:BMLayerItem = bm.verts.layers.int.new("dson_vertex_indices")
-dson_face:BMLayerItem = bm.faces.layers.int.new("dson_face_indices")
-
-# Cache the material indices from the DSF file. This is technically
-#    redundant, since material indices are stored as attributes already.
-#    However, this allows us to change the material slots (i.e. convert
-#    to UDIM) while retaining access to the original Daz Studio surfaces.
-dson_mats:BMLayerItem = bm.faces.layers.int.new("dson_material_indices")
-
-# Add vertices
-for (index, dson_vertex) in enumerate(struct.vertices):
-    coordinate:Vector = Vector(dson_vertex)
-    vertex:BMVert = bm.verts.new(coordinate)
-    vertex[dson_vert] = index
-
-bm.verts.ensure_lookup_table()
-
-# Add faces
-for (index, polygon) in enumerate(struct.polygons):
+def create_geometry(context:Context, struct:DsonGeometry) -> Mesh:
+    """Create a mesh using the data inside a DsonGeometry struct."""
     
-    # If a face has bad geometry, polygon's __iter__() method will
-    #    return None and the face is skipped. Such a face would've
-    #    been drawn as an edge anyway, so there will be no practical
-    #    effect on the mesh, visually.
-    vertices:list[BMVert] = [ bm.verts[index] for index in polygon ]
+    # Create mesh in blend file
+    mesh:Mesh = context.blend_data.meshes.new(struct.library_id)
     
-    if vertices:
+    # Setup BMesh
+    bm:BMesh = bmesh.new()
+    bm.from_mesh(mesh)
+    
+    # Add vertices from struct
+    for (index, vertex) in enumerate(struct.vertices):
+        vector:Vector = Vector(vertex)
+        bm.verts.new(vector)
+    
+    # Ensure geometry is valid
+    bm.verts.ensure_lookup_table()
+    
+    # Create attributes
+    # "attr_original" caches the original face index, in case geometry is
+    #   invalid or deleted
+    # "attr_material" caches the original material index, so material slots
+    #   can be reshuffled or deleted
+    attr_original:BMLayerItem = bm.faces.layers.int.new("daz_original_index")
+    attr_material:BMLayerItem = bm.faces.layers.int.new("daz_material_index")
+    
+    # Add faces from struct
+    for (index, polygon) in enumerate(struct.polygons):
+        
+        # Invalid faces will return None, so they should be skipped
+        indices:list[int] = list(polygon)
+        if not indices:
+            continue
+        
+        # Create the geometry with BMesh.
+        vertices:list[BMVert] = [ bm.verts[index] for index in indices ]
         face:BMFace = bm.faces.new(vertices)
-        face[dson_face] = index
-        face[dson_mats] = struct.material_indices[index]
+        
+        # These need to be assigned inside the DsonGeometry loop, or else
+        #   they will go out of alignment if invalid geometry is skipped
+        face[attr_original] = index
+        face[attr_material] = struct.material_indices[index]
+    
+    # Cleanup BMesh
+    bm.to_mesh(mesh)
+    bm.free()
+    
+    # A more robust implementation will probably want to cache the 
+    #   material names inside a PropertyGroup assigned to the mesh
+    
+    return mesh
 
-# Clean up
-bm.to_mesh(mesh)
-bm.free()
 
-# Add newly-created mesh to scene.
-# NOTE: This does not translate from Daz Studio's coordinate system,
-#    so assets will be loaded at 100x scale and oriented Y-up.
+# ============================================================================ #
+# SCRIPT                                                                       #
+# ============================================================================ #
+
+# Change this to match Daz Studio install directory
+CONTENT_DIRECTORY:str = "F:/Daz3D"
+GEOMETRY_URL:str = "/data/DAZ 3D/Genesis 8/Female/Genesis8Female.dsf#geometry"
+
+# ============================================================================ #
+
+# Setup
+file.add_content_directory(CONTENT_DIRECTORY)
+
+# Construct intermediate representation using DUFMan
+struct:DsonGeometry = DsonGeometry.load(GEOMETRY_URL)
+
+# Create mesh object
+mesh:Mesh = create_geometry(bpy.context, struct)
+
+# Add object to scene
 obj:Object = bpy.data.objects.new(struct.library_id, mesh)
 bpy.context.view_layer.layer_collection.collection.objects.link(obj)
+
+# Cleanup
+file.remove_content_directory(CONTENT_DIRECTORY)
