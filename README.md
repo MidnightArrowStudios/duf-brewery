@@ -9,16 +9,13 @@ Right now, DUFMan is under active development. These scripts are for testing pur
 DUFMan is licensed under the MIT license, but any code that uses Blender's Python API must be licensed under the GPL. To avoid the GPL spreading to DUFMan's codebase, DUFMan must be installed separately from these test scripts. However, this process is fairly painless.
 
 The recommended approach is to install the DUFMan package into an external script directory. The process to do that [is detailed in the Blender documentation](https://docs.blender.org/manual/en/latest/editors/preferences/file_paths.html#script-directories). To summarize:
-1. Create a new folder on your file system (`/MyBlenderScripts`, for instance), and then create a `/modules` folder inside that.
-2. Copy the DUFMan package (https://github.com/MidnightArrowStudios/dufman) into a new folder inside `/modules` named `dufman`.
-3. Open Blender's preferences menu.
-4. Go to the `File Paths` tab.
-5. Add the directory you created (not the `/modules` folder, the folder that contains it) to the `Script Directories` section.
+1. Create a new folder on your file system ('/dufman', for instance) and create a '/modules' folder inside that.
+2. Download the DUFMan package (https://github.com/MidnightArrowStudios/dufman) into the '/modules' folder.
+3. Open Blender's preferences menu and go to the 'File Paths' tab.
+4. Add the directory you created in step #1 (not the '/modules' folder, the one that contains it) to the 'Script Directories' section.
 
-Now, you should be able to import DUFMan in either the Python console or the text editor.
+Once that's done, you should be able to import DUFMan from either the Python console or the text editor.
 
-You can also install DUFMan into the `/scripts/modules` directory in your Blender install directory, but that is not recommended since the default directory is very cluttered and you'll need to reinstall DUFMan every time a new version of Blender is released.
+You can also install DUFMan into the '/scripts/modules' directory in your Blender install directory, but that's not recommended. The default directory is very cluttered, and every new release of Blender creates a new folder, so you'll have to continually reinstall DUFMan every time a new version comes out.
 
-As soon as DUFMan is installed, you should be able to load the Python files located in `duf-brewery` directly into Blender's text editor and run them with minimal tweaks. 
-
-Remember to alter the content directory path to match your own Daz Studio installation!
+Once DUFMan is installed, you can load or copy-paste the Python files located in 'duf-brewery/brews' into Blender's text editor and run them with minimal tweaks. Remember to alter the content directory path to match your own Daz Studio installation.
